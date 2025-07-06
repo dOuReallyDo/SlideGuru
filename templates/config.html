@@ -28,6 +28,15 @@
   {% endif %}
 </div>
 <!-- ... ripeti per Anthropic, Google, Locale ... -->
+<!-- Prompt di sistema -->
+<div class="provider-section">
+  <h3>Prompt di sistema</h3>
+  <div class="api-key-section">
+    <textarea id="system-prompt" class="param-input" style="width:100%;min-height:120px;"></textarea>
+    <button class="btn btn-primary" onclick="saveSystemPrompt()">Salva Prompt</button>
+    <span id="system-prompt-status" style="margin-left:10px;"></span>
+  </div>
+</div>
 <script>
 function populateModelSelect(provider) {
   fetch('/api/list_models', {
@@ -74,6 +83,54 @@ function saveSelectedModel(provider) {
     }
   });
 }
+function loadSystemPrompt() {
+  fetch('/api/get_system_prompt')
+    .then(r => r.json())
+    .then(data => {
+      if(data.status === 'success') {
+        document.getElementById('system-prompt').value = data.prompt;
+      }
+    });
+}
+function saveSystemPrompt() {
+  const prompt = document.getElementById('system-prompt').value.trim();
+  fetch('/api/set_system_prompt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt })
+  })
+  .then(r => r.json())
+  .then(data => {
+    const status = document.getElementById('system-prompt-status');
+    if(data.status === 'success') {
+      status.textContent = 'Prompt salvato!';
+      status.style.color = 'green';
+    } else {
+      status.textContent = 'Errore: ' + data.message;
+      status.style.color = 'red';
+    }
+    setTimeout(() => status.textContent = '', 2000);
+  });
+}
 // Popola i menu modelli al caricamento
 ['openai','anthropic','google','local'].forEach(populateModelSelect);
+// Carica il prompt al caricamento pagina
+loadSystemPrompt();
+// Aggiorna endpoint locale al cambio backend
+const backendSelect = document.getElementById('local-backend-select');
+if(backendSelect) {
+  backendSelect.addEventListener('change', function() {
+    fetch('/api/default_endpoint', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ backend: this.value })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if(data.status === 'success') {
+        document.getElementById('local-endpoint-input').value = data.endpoint;
+      }
+    });
+  });
+}
 </script> 
