@@ -71,20 +71,24 @@ def index():
         if 'file' not in request.files:
             flash('No file part')
             return redirect(request.url)
-        file = request.files['file']
-        if file.filename == '':
+        files = request.files.getlist('file')
+        if not files or all(f.filename == '' for f in files):
             flash('No selected file')
             return redirect(request.url)
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-
-            text = extract_text_from_file(filepath)
-            slides_content = generate_slide_content(text)
-            pptx_path = create_presentation(slides_content)
-            return send_file(pptx_path, as_attachment=True)
-
+        texts = []
+        for file in files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                texts.append(extract_text_from_file(filepath))
+        if not texts:
+            flash('Nessun file valido caricato')
+            return redirect(request.url)
+        text = '\n'.join(texts)
+        slides_content = generate_slide_content(text)
+        pptx_path = create_presentation(slides_content)
+        return send_file(pptx_path, as_attachment=True)
     return render_template('index.html')
 
 @app.route("/config")

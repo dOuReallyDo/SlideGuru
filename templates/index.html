@@ -226,7 +226,7 @@
                 <div class="upload-icon">📄</div>
                 <div class="upload-text">Clicca o trascina qui il tuo file</div>
                 <div class="upload-hint">Supporta PDF, DOCX e TXT</div>
-                <input type="file" name="file" id="file-input" accept=".pdf,.docx,.txt">
+                <input type="file" name="file" id="file-input" accept=".pdf,.docx,.txt" multiple>
             </div>
 
             <div class="file-info" id="file-info">
@@ -289,10 +289,16 @@
         fileInput.addEventListener('change', handleFileSelect);
 
         function handleFileSelect() {
-            const file = fileInput.files[0];
-            if (file) {
-                fileName.textContent = file.name;
-                fileSize.textContent = formatFileSize(file.size);
+            const files = fileInput.files;
+            if (files.length > 0) {
+                let names = [];
+                let sizes = [];
+                for (let i = 0; i < files.length; i++) {
+                    names.push(files[i].name);
+                    sizes.push(formatFileSize(files[i].size));
+                }
+                fileName.textContent = names.join(', ');
+                fileSize.textContent = sizes.join(', ');
                 fileInfo.style.display = 'block';
                 submitBtn.style.display = 'inline-block';
             } else {
