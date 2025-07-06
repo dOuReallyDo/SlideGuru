@@ -679,23 +679,12 @@
         <!-- Tab Settings -->
         <div id="settings-tab" class="tab-content">
             <div class="provider-section">
-                <h3>Impostazioni Globali</h3>
-                <p>Configurazione generale dell'applicazione</p>
-                
+                <h3>Impostazioni Attuali</h3>
                 <div class="api-key-section">
-                    <h4>Modello Corrente</h4>
-                    <p><strong>{{ current_model.name }}</strong> - {{ current_model.description }}</p>
-                    <p>Provider: {{ current_model.provider.value }}</p>
-                </div>
-
-                <div class="api-key-section">
-                    <h4>Informazioni</h4>
-                    <ul>
-                        <li>I modelli cloud richiedono una connessione internet</li>
-                        <li>I modelli locali funzionano offline ma richiedono più risorse</li>
-                        <li>Le chiavi API sono salvate temporaneamente nella sessione</li>
-                        <li>I parametri personalizzati sono salvati nel file di configurazione</li>
-                    </ul>
+                    <h4>Configurazione Corrente</h4>
+                    <div id="current-config">
+                        <!-- Qui verrà inserita la configurazione attuale via JS -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -703,6 +692,30 @@
 
     <script>
         let currentParams = {};
+
+        // Carica la configurazione attuale e aggiorna la UI
+        function loadConfig() {
+            fetch('/api/get_config')
+                .then(response => response.json())
+                .then(config => {
+                    // Aggiorna la sezione impostazioni attuali
+                    let html = `<ul>`;
+                    html += `<li><b>Modello selezionato:</b> ${config.models[config.current_model]?.name || config.current_model}</li>`;
+                    html += `<li><b>Backend locale:</b> ${config.local_backend}</li>`;
+                    html += `<li><b>Endpoint locale:</b> ${config.local_endpoint}</li>`;
+                    html += `<li><b>API Key OpenAI:</b> ${config.api_keys.openai ? '✔️' : '❌'}</li>`;
+                    html += `<li><b>API Key Anthropic:</b> ${config.api_keys.anthropic ? '✔️' : '❌'}</li>`;
+                    html += `<li><b>API Key Google:</b> ${config.api_keys.google ? '✔️' : '❌'}</li>`;
+                    html += `</ul>`;
+                    document.getElementById('current-config').innerHTML = html;
+                });
+        }
+        loadConfig();
+
+        // Aggiorna la UI dopo ogni azione che modifica la configurazione
+        function afterConfigChange() {
+            setTimeout(loadConfig, 500);
+        }
 
         function showTab(tabName) {
             // Nascondi tutti i tab
@@ -729,26 +742,12 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Aggiorna l'interfaccia
-                    document.querySelectorAll('.model-card').forEach(card => {
-                        card.classList.remove('current');
-                        const status = card.querySelector('.model-status');
-                        status.textContent = 'Disponibile';
-                        status.className = 'model-status status-available';
-                    });
-                    
-                    const selectedCard = document.querySelector(`[data-model-id="${modelId}"]`);
-                    if (selectedCard) {
-                        selectedCard.classList.add('current');
-                        const status = selectedCard.querySelector('.model-status');
-                        status.textContent = 'Attivo';
-                        status.className = 'model-status status-current';
-                    }
-                    
                     alert('Modello impostato con successo!');
+                    location.reload();
                 } else {
                     alert('Errore: ' + data.message);
                 }
+                afterConfigChange();
             })
             .catch(error => {
                 alert('Errore di connessione: ' + error);
@@ -758,21 +757,16 @@
         function setApiKey(provider) {
             const keyInput = document.getElementById(provider + '-key');
             const apiKey = keyInput.value.trim();
-            
             if (!apiKey) {
                 alert('Inserisci una chiave API valida');
                 return;
             }
-
             fetch('/api/set_api_key', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    provider: provider, 
-                    api_key: apiKey 
-                })
+                body: JSON.stringify({ provider: provider, api_key: apiKey })
             })
             .then(response => response.json())
             .then(data => {
@@ -782,6 +776,7 @@
                 } else {
                     alert('Errore: ' + data.message);
                 }
+                afterConfigChange();
             })
             .catch(error => {
                 alert('Errore di connessione: ' + error);
@@ -877,6 +872,7 @@
                 if (data.status === 'success') {
                     setTimeout(() => { location.reload(); }, 1000);
                 }
+                afterConfigChange();
             })
             .catch(error => {
                 resultDiv.className = 'test-result test-error';
