@@ -1,0 +1,41 @@
+# --- Python bytecode and cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual environments ---
+venv/
+env/
+ENV/
+
+# --- Environment variables and config ---
+.env
+llm_config.json
+config.py
+
+# --- User uploads / generated files ---
+uploads/
+
+# --- Flask instance folder ---
+instance/
+
+# --- Database files ---
+*.sqlite3
+*.db
+
+# --- Logs ---
+*.log
+
+# --- IDEs and editors ---
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# --- macOS artifacts ---
+.DS_Store
+
+# --- Build / packaging ---
+build/
+dist/
+*.egg-info/
