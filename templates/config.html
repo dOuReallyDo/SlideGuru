@@ -395,7 +395,6 @@
                         <p>Modelli GPT per compiti generali e creativi</p>
                     </div>
                 </div>
-
                 <div class="api-key-section">
                     <h4>Chiave API OpenAI</h4>
                     <div class="api-key-form">
@@ -408,15 +407,14 @@
                     </div>
                     <div id="openai-test-result" class="test-result" style="display: none;"></div>
                 </div>
-
-                {% if not missing_keys.openai %}
+                {% if not missing_keys.openai and available_cloud|length > 0 %}
                 <div class="models-grid">
                     {% for model_id, model in available_cloud.items() if model.provider.value == 'openai' %}
-                    <div class="model-card {% if model_id == llm_config.current_model %}current{% endif %}" data-model-id="{{ model_id }}">
+                    <div class="model-card {% if model_id == current_model %}current{% endif %}" data-model-id="{{ model_id }}">
                         <div class="model-header">
                             <div class="model-name">{{ model.name }}</div>
-                            <div class="model-status {% if model_id == llm_config.current_model %}status-current{% else %}status-available{% endif %}">
-                                {% if model_id == llm_config.current_model %}Attivo{% else %}Disponibile{% endif %}
+                            <div class="model-status {% if model_id == current_model %}status-current{% else %}status-available{% endif %}">
+                                {% if model_id == current_model %}Attivo{% else %}Disponibile{% endif %}
                             </div>
                         </div>
                         <div class="model-description">{{ model.description }}</div>
@@ -454,9 +452,10 @@
                     </div>
                     {% endfor %}
                 </div>
+                {% elif not missing_keys.openai %}
+                <div style="color:#d63031; margin:20px 0;">Nessun modello OpenAI disponibile.</div>
                 {% endif %}
             </div>
-
             <!-- Anthropic Section -->
             <div class="provider-section">
                 <div class="provider-header">
@@ -466,7 +465,6 @@
                         <p>Modelli Claude per analisi e scrittura avanzata</p>
                     </div>
                 </div>
-
                 <div class="api-key-section">
                     <h4>Chiave API Anthropic</h4>
                     <div class="api-key-form">
@@ -479,15 +477,14 @@
                     </div>
                     <div id="anthropic-test-result" class="test-result" style="display: none;"></div>
                 </div>
-
-                {% if not missing_keys.anthropic %}
+                {% if not missing_keys.anthropic and available_cloud|length > 0 %}
                 <div class="models-grid">
                     {% for model_id, model in available_cloud.items() if model.provider.value == 'anthropic' %}
-                    <div class="model-card {% if model_id == llm_config.current_model %}current{% endif %}" data-model-id="{{ model_id }}">
+                    <div class="model-card {% if model_id == current_model %}current{% endif %}" data-model-id="{{ model_id }}">
                         <div class="model-header">
                             <div class="model-name">{{ model.name }}</div>
-                            <div class="model-status {% if model_id == llm_config.current_model %}status-current{% else %}status-available{% endif %}">
-                                {% if model_id == llm_config.current_model %}Attivo{% else %}Disponibile{% endif %}
+                            <div class="model-status {% if model_id == current_model %}status-current{% else %}status-available{% endif %}">
+                                {% if model_id == current_model %}Attivo{% else %}Disponibile{% endif %}
                             </div>
                         </div>
                         <div class="model-description">{{ model.description }}</div>
@@ -525,9 +522,10 @@
                     </div>
                     {% endfor %}
                 </div>
+                {% elif not missing_keys.anthropic %}
+                <div style="color:#d63031; margin:20px 0;">Nessun modello Anthropic disponibile.</div>
                 {% endif %}
             </div>
-
             <!-- Google Section -->
             <div class="provider-section">
                 <div class="provider-header">
@@ -537,7 +535,6 @@
                         <p>Modelli Gemini per compiti complessi e creativi</p>
                     </div>
                 </div>
-
                 <div class="api-key-section">
                     <h4>Chiave API Google</h4>
                     <div class="api-key-form">
@@ -550,15 +547,14 @@
                     </div>
                     <div id="google-test-result" class="test-result" style="display: none;"></div>
                 </div>
-
-                {% if not missing_keys.google %}
+                {% if not missing_keys.google and available_cloud|length > 0 %}
                 <div class="models-grid">
                     {% for model_id, model in available_cloud.items() if model.provider.value == 'google' %}
-                    <div class="model-card {% if model_id == llm_config.current_model %}current{% endif %}" data-model-id="{{ model_id }}">
+                    <div class="model-card {% if model_id == current_model %}current{% endif %}" data-model-id="{{ model_id }}">
                         <div class="model-header">
                             <div class="model-name">{{ model.name }}</div>
-                            <div class="model-status {% if model_id == llm_config.current_model %}status-current{% else %}status-available{% endif %}">
-                                {% if model_id == llm_config.current_model %}Attivo{% else %}Disponibile{% endif %}
+                            <div class="model-status {% if model_id == current_model %}status-current{% else %}status-available{% endif %}">
+                                {% if model_id == current_model %}Attivo{% else %}Disponibile{% endif %}
                             </div>
                         </div>
                         <div class="model-description">{{ model.description }}</div>
@@ -596,10 +592,11 @@
                     </div>
                     {% endfor %}
                 </div>
+                {% elif not missing_keys.google %}
+                <div style="color:#d63031; margin:20px 0;">Nessun modello Google disponibile.</div>
                 {% endif %}
             </div>
         </div>
-
         <!-- Tab Local Models -->
         <div id="local-tab" class="tab-content">
             <div class="provider-section">
@@ -610,7 +607,6 @@
                         <p>Esegui modelli localmente con Ollama o LM Studio</p>
                     </div>
                 </div>
-
                 <div class="api-key-section">
                     <h4>Configurazione Backend Locale</h4>
                     <form id="local-backend-form" onsubmit="event.preventDefault(); saveLocalBackend();">
@@ -628,14 +624,14 @@
                     <button class="btn btn-secondary" onclick="testConnection('local')">Test Connessione</button>
                     <div id="local-test-result" class="test-result" style="display: none;"></div>
                 </div>
-
+                {% if available_local|length > 0 %}
                 <div class="models-grid">
                     {% for model_id, model in available_local.items() %}
-                    <div class="model-card {% if model_id == llm_config.current_model %}current{% endif %}" data-model-id="{{ model_id }}">
+                    <div class="model-card {% if model_id == current_model %}current{% endif %}" data-model-id="{{ model_id }}">
                         <div class="model-header">
                             <div class="model-name">{{ model.name }}</div>
-                            <div class="model-status {% if model_id == llm_config.current_model %}status-current{% else %}status-available{% endif %}">
-                                {% if model_id == llm_config.current_model %}Attivo{% else %}Disponibile{% endif %}
+                            <div class="model-status {% if model_id == current_model %}status-current{% else %}status-available{% endif %}">
+                                {% if model_id == current_model %}Attivo{% else %}Disponibile{% endif %}
                             </div>
                         </div>
                         <div class="model-description">{{ model.description }}</div>
@@ -673,9 +669,11 @@
                     </div>
                     {% endfor %}
                 </div>
+                {% else %}
+                <div style="color:#d63031; margin:20px 0;">Nessun modello locale disponibile. Controlla che Ollama/LM Studio sia in esecuzione e che i modelli siano caricati.</div>
+                {% endif %}
             </div>
         </div>
-
         <!-- Tab Settings -->
         <div id="settings-tab" class="tab-content">
             <div class="provider-section">
@@ -692,7 +690,6 @@
 
     <script>
         let currentParams = {};
-
         // Carica la configurazione attuale e aggiorna la UI
         function loadConfig() {
             fetch('/api/get_config')
@@ -700,7 +697,7 @@
                 .then(config => {
                     // Aggiorna la sezione impostazioni attuali
                     let html = `<ul>`;
-                    html += `<li><b>Modello selezionato:</b> ${config.models[config.current_model]?.name || config.current_model}</li>`;
+                    html += `<li><b>Modello selezionato:</b> ${config.available_cloud[config.current_model]?.name || config.available_local[config.current_model]?.name || config.current_model}</li>`;
                     html += `<li><b>Backend locale:</b> ${config.local_backend}</li>`;
                     html += `<li><b>Endpoint locale:</b> ${config.local_endpoint}</li>`;
                     html += `<li><b>API Key OpenAI:</b> ${config.api_keys.openai ? '✔️' : '❌'}</li>`;
@@ -711,7 +708,6 @@
                 });
         }
         loadConfig();
-
         // Aggiorna la UI dopo ogni azione che modifica la configurazione
         function afterConfigChange() {
             setTimeout(loadConfig, 500);

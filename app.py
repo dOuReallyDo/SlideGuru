@@ -202,12 +202,15 @@ def set_local_backend():
 
 @app.route("/api/get_config", methods=['GET'])
 def get_config():
+    # Restituisco solo i modelli effettivamente disponibili
+    available_cloud = llm_service.available_cloud_models()
+    available_local = llm_service.available_local_models()
     config = {
         'current_model': llm_config.current_model,
         'local_backend': llm_config.local_backend,
         'local_endpoint': llm_config.local_endpoint,
-        'models': {k: v.__dict__ for k, v in llm_config.models.items()},
-        'custom_params': {},
+        'available_cloud': {k: v.__dict__ for k, v in available_cloud.items()},
+        'available_local': {k: v.__dict__ for k, v in available_local.items()},
         'api_keys': {
             'openai': bool(llm_config.get_api_key(LLMProvider.OPENAI)),
             'anthropic': bool(llm_config.get_api_key(LLMProvider.ANTHROPIC)),
@@ -215,6 +218,16 @@ def get_config():
         }
     }
     return jsonify(config)
+
+@app.route("/api/refresh_models", methods=['GET'])
+def refresh_models():
+    # Endpoint per refresh dinamico della lista modelli
+    available_cloud = llm_service.available_cloud_models()
+    available_local = llm_service.available_local_models()
+    return jsonify({
+        'available_cloud': {k: v.__dict__ for k, v in available_cloud.items()},
+        'available_local': {k: v.__dict__ for k, v in available_local.items()}
+    })
 
 # --- START SERVER ---
 if __name__ == "__main__":
