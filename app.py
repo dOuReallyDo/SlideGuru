@@ -178,6 +178,22 @@ def set_local_backend():
         return jsonify({"status": "success", "message": "Backend locale aggiornato"})
     return jsonify({"status": "error", "message": "Dati non validi"})
 
+@app.route("/api/get_config", methods=['GET'])
+def get_config():
+    config = {
+        'current_model': llm_config.current_model,
+        'local_backend': llm_config.local_backend,
+        'local_endpoint': llm_config.local_endpoint,
+        'models': {k: v.__dict__ for k, v in llm_config.models.items()},
+        'custom_params': {},
+        'api_keys': {
+            'openai': bool(llm_config.get_api_key(LLMProvider.OPENAI)),
+            'anthropic': bool(llm_config.get_api_key(LLMProvider.ANTHROPIC)),
+            'google': bool(llm_config.get_api_key(LLMProvider.GOOGLE)),
+        }
+    }
+    return jsonify(config)
+
 # --- START SERVER ---
 if __name__ == "__main__":
     app.run(debug=True, port=8080)
