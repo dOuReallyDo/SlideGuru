@@ -1,4 +1,4 @@
-2025-07-06 18:38:05,111 ERROR: Errore 500: 500 Internal Server Error: The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.
+2025-07-06 20:17:15,483 ERROR: Errore 500: 500 Internal Server Error: The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.
 Traceback:
 Traceback (most recent call last):
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/app.py", line 1473, in wsgi_app
@@ -13,7 +13,7 @@ Traceback (most recent call last):
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/app.py", line 865, in dispatch_request
     return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mariocurcio/Progetti/SlideGuru/app.py", line 248, in get_config
+  File "/Users/mariocurcio/Progetti/SlideGuru/app.py", line 334, in get_config
     return jsonify(config)
            ^^^^^^^^^^^^^^^
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/json/__init__.py", line 170, in jsonify
@@ -37,8 +37,8 @@ Traceback (most recent call last):
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/json/provider.py", line 121, in _default
     raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
 TypeError: Object of type LLMProvider is not JSON serializable
- [in /Users/mariocurcio/Progetti/SlideGuru/app.py:37]
-2025-07-06 18:46:37,035 ERROR: Exception on /api/get_config [GET] [in /Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/app.py:838]
+ [in /Users/mariocurcio/Progetti/SlideGuru/app.py:40]
+2025-07-06 20:17:28,452 ERROR: Exception on /api/get_config [GET] [in /Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/app.py:838]
 Traceback (most recent call last):
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/app.py", line 1473, in wsgi_app
     response = self.full_dispatch_request()
@@ -52,7 +52,7 @@ Traceback (most recent call last):
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/app.py", line 865, in dispatch_request
     return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mariocurcio/Progetti/SlideGuru/app.py", line 251, in get_config
+  File "/Users/mariocurcio/Progetti/SlideGuru/app.py", line 334, in get_config
     return jsonify(config)
            ^^^^^^^^^^^^^^^
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/json/__init__.py", line 170, in jsonify
@@ -76,7 +76,7 @@ Traceback (most recent call last):
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/json/provider.py", line 121, in _default
     raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
 TypeError: Object of type LLMProvider is not JSON serializable
-2025-07-06 18:46:37,040 ERROR: Errore 500: 500 Internal Server Error: The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.
+2025-07-06 20:17:28,455 ERROR: Errore 500: 500 Internal Server Error: The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.
 Traceback:
 Traceback (most recent call last):
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/app.py", line 1473, in wsgi_app
@@ -91,7 +91,7 @@ Traceback (most recent call last):
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/app.py", line 865, in dispatch_request
     return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mariocurcio/Progetti/SlideGuru/app.py", line 251, in get_config
+  File "/Users/mariocurcio/Progetti/SlideGuru/app.py", line 334, in get_config
     return jsonify(config)
            ^^^^^^^^^^^^^^^
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/json/__init__.py", line 170, in jsonify
@@ -115,4 +115,4 @@ Traceback (most recent call last):
   File "/Users/mariocurcio/Progetti/SlideGuru/venv/lib/python3.12/site-packages/flask/json/provider.py", line 121, in _default
     raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
 TypeError: Object of type LLMProvider is not JSON serializable
- [in /Users/mariocurcio/Progetti/SlideGuru/app.py:37]
+ [in /Users/mariocurcio/Progetti/SlideGuru/app.py:40]

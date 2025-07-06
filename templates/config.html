@@ -514,9 +514,17 @@
             fetch('/api/get_config')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('current-model').textContent = data.current_model;
+                    if (data.error) {
+                        console.error('Errore caricamento config:', data.error);
+                        return;
+                    }
+                    // Aggiorna sempre con il nome del modello, non l'ID
+                    document.getElementById('current-model').textContent = data.current_model_name || data.current_model;
                     document.getElementById('current-backend').textContent = data.local_backend;
                     document.getElementById('current-endpoint').textContent = data.local_endpoint;
+                })
+                .catch(error => {
+                    console.error('Errore fetch config:', error);
                 });
         }
 

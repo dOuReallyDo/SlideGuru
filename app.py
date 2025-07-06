@@ -8,6 +8,8 @@ from werkzeug.utils import secure_filename
 import docx
 import fitz  # PyMuPDF
 from pptx import Presentation
+from openpyxl import load_workbook
+import xlrd
 from config import llm_config, LLMProvider
 from llm_service import llm_service
 import logging
@@ -22,7 +24,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'a-super-secret-key-for-flash-messages'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ARCHIVE_FOLDER'] = 'archive'
-app.config['ALLOWED_EXTENSIONS'] = {'txt', 'pdf', 'docx'}
+app.config['ALLOWED_EXTENSIONS'] = {'txt', 'pdf', 'docx', 'pptx', 'ppt', 'xlsx', 'xls'}
 app.config['TEMPLATE_PATH'] = os.path.join('static', 'template.pptx')
 
 # Logging su file
@@ -92,17 +94,45 @@ def create_session_presentation(slides_content, session_path, session_name):
 def extract_text_from_file(filepath):
     ext = filepath.rsplit('.', 1)[1].lower()
     text = ""
-    if ext == 'txt':
-        with open(filepath, 'r', encoding='utf-8') as f:
-            text = f.read()
-    elif ext == 'pdf':
-        doc = fitz.open(filepath)
-        for page in doc:
-            text += page.get_text()
-    elif ext == 'docx':
-        doc = docx.Document(filepath)
-        for para in doc.paragraphs:
-            text += para.text + '\n'
+    try:
+        if ext == 'txt':
+            with open(filepath, 'r', encoding='utf-8') as f:
+                text = f.read()
+        elif ext == 'pdf':
+            doc = fitz.open(filepath)
+            for page in doc:
+                text += page.get_text()
+        elif ext == 'docx':
+            doc = docx.Document(filepath)
+            for para in doc.paragraphs:
+                text += para.text + '\n'
+        elif ext in ['pptx', 'ppt']:
+            prs = Presentation(filepath)
+            for slide in prs.slides:
+                for shape in slide.shapes:
+                    if hasattr(shape, "text"):
+                        text += shape.text + '\n'
+        elif ext == 'xlsx':
+            wb = load_workbook(filepath, data_only=True)
+            for sheet_name in wb.sheetnames:
+                ws = wb[sheet_name]
+                text += f"\n--- {sheet_name} ---\n"
+                for row in ws.iter_rows(values_only=True):
+                    if any(cell is not None for cell in row):
+                        text += '\t'.join(str(cell) if cell is not None else '' for cell in row) + '\n'
+        elif ext == 'xls':
+            wb = xlrd.open_workbook(filepath)
+            for sheet_idx in range(wb.nsheets):
+                sheet = wb.sheet_by_index(sheet_idx)
+                text += f"\n--- {sheet.name} ---\n"
+                for row_idx in range(sheet.nrows):
+                    row = [str(sheet.cell_value(row_idx, col_idx)) for col_idx in range(sheet.ncols)]
+                    if any(cell.strip() for cell in row):
+                        text += '\t'.join(row) + '\n'
+    except Exception as e:
+        app.logger.error(f"Errore estrazione testo da {filepath}: {str(e)}")
+        text = f"Errore nella lettura del file {os.path.basename(filepath)}: {str(e)}"
+    
     return text
 
 def create_presentation(slides_content):
@@ -316,22 +346,42 @@ def set_local_backend():
 
 @app.route("/api/get_config", methods=['GET'])
 def get_config():
-    # Restituisco solo i modelli effettivamente disponibili
-    available_cloud = llm_service.available_cloud_models()
-    available_local = llm_service.available_local_models()
-    config = {
-        'current_model': llm_config.current_model,
-        'local_backend': llm_config.local_backend,
-        'local_endpoint': llm_config.local_endpoint,
-        'available_cloud': {k: v.__dict__ for k, v in available_cloud.items()},
-        'available_local': {k: v.__dict__ for k, v in available_local.items()},
-        'api_keys': {
-            'openai': bool(llm_config.get_api_key(LLMProvider.OPENAI)),
-            'anthropic': bool(llm_config.get_api_key(LLMProvider.ANTHROPIC)),
-            'google': bool(llm_config.get_api_key(LLMProvider.GOOGLE)),
+    try:
+        # Restituisco solo i modelli effettivamente disponibili
+        available_cloud = llm_service.available_cloud_models()
+        available_local = llm_service.available_local_models()
+        
+        # Converto ModelConfig in dict serializzabile
+        def model_to_dict(model_config):
+            return {
+                'name': model_config.name,
+                'provider': model_config.provider.value,  # Converto enum in stringa
+                'description': model_config.description,
+                'max_tokens': model_config.max_tokens,
+                'temperature': model_config.temperature,
+                'context_window': model_config.context_window,
+                'cost_per_1k_tokens': model_config.cost_per_1k_tokens,
+                'api_key_env': model_config.api_key_env,
+                'base_url': model_config.base_url
+            }
+        
+        config = {
+            'current_model': llm_config.current_model,
+            'current_model_name': llm_config.get_current_model().name,
+            'local_backend': llm_config.local_backend,
+            'local_endpoint': llm_config.local_endpoint,
+            'available_cloud': {k: model_to_dict(v) for k, v in available_cloud.items()},
+            'available_local': {k: model_to_dict(v) for k, v in available_local.items()},
+            'api_keys': {
+                'openai': bool(llm_config.get_api_key(LLMProvider.OPENAI)),
+                'anthropic': bool(llm_config.get_api_key(LLMProvider.ANTHROPIC)),
+                'google': bool(llm_config.get_api_key(LLMProvider.GOOGLE)),
+            }
         }
-    }
-    return jsonify(config)
+        return jsonify(config)
+    except Exception as e:
+        app.logger.error(f"Errore get_config: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route("/api/refresh_models", methods=['GET'])
 def refresh_models():
