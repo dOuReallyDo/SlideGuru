@@ -229,6 +229,46 @@ def refresh_models():
         'available_local': {k: v.__dict__ for k, v in available_local.items()}
     })
 
+@app.route("/api/list_models", methods=['POST'])
+def api_list_models():
+    data = request.get_json()
+    provider = data.get('provider')
+    result = []
+    try:
+        if provider == 'openai':
+            models = llm_service.get_available_models(LLMProvider.OPENAI)
+            if models.get('status') == 'success':
+                result = models.get('models', [])
+        elif provider == 'anthropic':
+            models = llm_service.get_available_models(LLMProvider.ANTHROPIC)
+            if models.get('status') == 'success':
+                result = models.get('models', [])
+        elif provider == 'google':
+            models = llm_service.get_available_models(LLMProvider.GOOGLE)
+            if models.get('status') == 'success':
+                result = models.get('models', [])
+        elif provider == 'local':
+            models = llm_service.get_available_models(LLMProvider.LOCAL)
+            if models.get('status') == 'success':
+                result = models.get('models', [])
+        return jsonify({'status': 'success', 'models': result})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route("/api/default_endpoint", methods=['POST'])
+def api_default_endpoint():
+    data = request.get_json()
+    backend = data.get('backend')
+    # Endpoint di default per Ollama e LM Studio
+    defaults = {
+        'ollama': 'http://localhost:11434',
+        'lmstudio': 'http://localhost:1234',
+    }
+    # Recupera l'ultimo endpoint usato per il backend, se presente
+    last = getattr(llm_config, f'last_endpoint_{backend}', None)
+    endpoint = last or defaults.get(backend, '')
+    return jsonify({'status': 'success', 'endpoint': endpoint})
+
 # --- START SERVER ---
 if __name__ == "__main__":
     app.run(debug=False, port=8080)
