@@ -1,0 +1,17 @@
+{
+  "current_model": "gpt-4o-mini",
+  "local_backend": "lmstudio",
+  "local_endpoint": "http://localhost:1234",
+  "custom_params": {
+    "gpt-4o-mini": {
+      "temperature": "0.3",
+      "max_tokens": "128000"
+    },
+    "gemini-1.5-pro": {
+      "max_tokens": 8192
+    },
+    "gemini-1.5-flash": {
+      "max_tokens": 8192
+    }
+  }
+}
