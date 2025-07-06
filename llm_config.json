@@ -1,5 +1,5 @@
 {
-  "current_model": "gpt-4o-mini",
+  "current_model": "gpt-4o",
   "local_backend": "lmstudio",
   "local_endpoint": "http://localhost:1234",
   "custom_params": {
