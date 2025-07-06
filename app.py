@@ -41,10 +41,53 @@ def internal_error(error):
     return render_template('500.html', error=error, traceback=tb), 500
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['ARCHIVE_FOLDER'], exist_ok=True)
 
 # --- UTILITY ---
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def create_session_folder(first_filename):
+    """Crea una cartella di sessione con naming convention"""
+    # Rimuove estensione e caratteri speciali dal nome del primo file
+    base_name = os.path.splitext(first_filename)[0]
+    safe_name = "".join(c for c in base_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+    safe_name = safe_name.replace(' ', '_')[:50]  # Limita lunghezza
+    
+    # Aggiunge timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    folder_name = f"{safe_name}_{timestamp}"
+    
+    # Crea il percorso completo
+    session_path = os.path.join(app.config['ARCHIVE_FOLDER'], folder_name)
+    os.makedirs(session_path, exist_ok=True)
+    
+    return session_path, folder_name
+
+def save_files_to_session(files, session_path):
+    """Salva i file di input nella cartella di sessione"""
+    saved_files = []
+    for file in files:
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(session_path, filename)
+            file.save(filepath)
+            saved_files.append(filepath)
+    return saved_files
+
+def create_session_presentation(slides_content, session_path, session_name):
+    """Crea la presentazione nella cartella di sessione"""
+    prs = Presentation(app.config['TEMPLATE_PATH'])
+    for slide_text in slides_content:
+        slide_layout = prs.slide_layouts[1]  # Title and Content
+        slide = prs.slides.add_slide(slide_layout)
+        slide.shapes.title.text = slide_text.get("title", "")
+        slide.placeholders[1].text = slide_text.get("content", "")
+    
+    output_filename = f"{session_name}_presentation.pptx"
+    output_path = os.path.join(session_path, output_filename)
+    prs.save(output_path)
+    return output_path
 
 def extract_text_from_file(filepath):
     ext = filepath.rsplit('.', 1)[1].lower()
@@ -117,27 +160,62 @@ def generate_slide_content(prompt_text):
 @app.route("/", methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
+        # Validazione base
         if 'file' not in request.files:
-            flash('No file part')
+            flash('Nessun file selezionato')
             return redirect(request.url)
+        
         files = request.files.getlist('file')
         if not files or all(f.filename == '' for f in files):
-            flash('No selected file')
+            flash('Fornire almeno 1 file di input in uno dei formati validi (PDF, DOCX, TXT)')
             return redirect(request.url)
-        texts = []
-        for file in files:
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(filepath)
-                texts.append(extract_text_from_file(filepath))
-        if not texts:
-            flash('Nessun file valido caricato')
+        
+        # Filtra solo i file validi
+        valid_files = [f for f in files if f and f.filename != '' and allowed_file(f.filename)]
+        
+        if not valid_files:
+            flash('Fornire almeno 1 file di input in uno dei formati validi (PDF, DOCX, TXT)')
             return redirect(request.url)
-        text = '\n'.join(texts)
-        slides_content = generate_slide_content(text)
-        pptx_path = create_presentation(slides_content)
-        return send_file(pptx_path, as_attachment=True)
+        
+        try:
+            # Crea cartella di sessione basata sul primo file
+            first_filename = secure_filename(valid_files[0].filename)
+            session_path, session_name = create_session_folder(first_filename)
+            
+            # Salva tutti i file nella cartella di sessione
+            saved_files = save_files_to_session(valid_files, session_path)
+            
+            # Estrai testo da tutti i file
+            texts = []
+            for filepath in saved_files:
+                text = extract_text_from_file(filepath)
+                if text.strip():  # Solo se il file ha contenuto
+                    texts.append(text)
+            
+            if not texts:
+                flash('I file caricati non contengono testo leggibile')
+                # Rimuovi cartella vuota
+                shutil.rmtree(session_path, ignore_errors=True)
+                return redirect(request.url)
+            
+            # Genera le slide
+            combined_text = '\n\n--- NUOVO DOCUMENTO ---\n\n'.join(texts)
+            slides_content = generate_slide_content(combined_text)
+            
+            # Crea presentazione nella cartella di sessione
+            pptx_path = create_session_presentation(slides_content, session_path, session_name)
+            
+            # Crea anche una copia temporanea per il download immediato
+            temp_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{session_name}_presentation.pptx")
+            shutil.copy2(pptx_path, temp_path)
+            
+            return send_file(temp_path, as_attachment=True, download_name=f"{session_name}_presentation.pptx")
+            
+        except Exception as e:
+            app.logger.error(f"Errore nella generazione: {str(e)}")
+            flash(f'Errore nella generazione della presentazione: {str(e)}')
+            return redirect(request.url)
+    
     return render_template('index.html')
 
 @app.route("/config")
@@ -194,9 +272,11 @@ def set_api_key():
     try:
         provider = LLMProvider(provider_name)
         llm_config.set_api_key(provider, api_key)
+        # Salva immediatamente la configurazione per persistenza
+        llm_config.save_config()
         # Reinizializza il servizio LLM
         llm_service._initialize_clients()
-        return jsonify({"status": "success", "message": f"Chiave API per {provider_name} impostata"})
+        return jsonify({"status": "success", "message": f"Chiave API per {provider_name} impostata e salvata"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
