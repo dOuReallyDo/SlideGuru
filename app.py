@@ -8,6 +8,9 @@ import fitz  # PyMuPDF
 from pptx import Presentation
 from config import llm_config, LLMProvider
 from llm_service import llm_service
+import logging
+from logging.handlers import RotatingFileHandler
+import traceback
 
 # --- CARICA CONFIG ---
 load_dotenv()
@@ -18,6 +21,21 @@ app.config['SECRET_KEY'] = 'a-super-secret-key-for-flash-messages'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'txt', 'pdf', 'docx'}
 app.config['TEMPLATE_PATH'] = os.path.join('static', 'template.pptx')
+
+# Logging su file
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=3)
+file_handler.setLevel(logging.ERROR)
+file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+app.logger.addHandler(file_handler)
+
+# Handler globale per errori 500
+@app.errorhandler(500)
+def internal_error(error):
+    tb = traceback.format_exc()
+    app.logger.error(f"Errore 500: {error}\nTraceback:\n{tb}")
+    return render_template('500.html', error=error, traceback=tb), 500
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
