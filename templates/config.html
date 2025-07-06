@@ -1,136 +1,754 @@
-<!-- Esempio per OpenAI, da replicare per gli altri provider -->
-<div class="provider-section">
-  <div class="provider-header">
-    <div class="provider-icon">🤖</div>
-    <div class="provider-info">
-      <h3>OpenAI</h3>
-      <p>Modelli GPT per compiti generali e creativi</p>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurazione - SlideGuru</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .current-config {
+            background: #f8f9ff;
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .current-config h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .config-item {
+            margin-bottom: 10px;
+        }
+
+        .config-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .config-value {
+            color: #666;
+            margin-left: 10px;
+        }
+
+        .provider-section {
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            background: #fafafa;
+        }
+
+        .provider-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .provider-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+
+        .provider-info h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .provider-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .api-key-section {
+            margin-bottom: 20px;
+        }
+
+        .api-key-section h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .api-key-form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .api-key-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .model-selection {
+            margin: 20px 0;
+        }
+
+        .model-selection label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .model-select {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .model-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .param-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .param-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .local-config {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .local-config label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .local-config select,
+        .local-config input {
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .external-link {
+            color: #667eea;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+
+        .external-link:hover {
+            text-decoration: underline;
+        }
+
+        .system-prompt-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9ff;
+            border-radius: 15px;
+        }
+
+        .system-prompt-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .system-prompt-section textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 1rem;
+            resize: vertical;
+        }
+
+        .system-prompt-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .save-status {
+            margin-left: 10px;
+            font-weight: bold;
+        }
+
+        .save-status.success {
+            color: #28a745;
+        }
+
+        .save-status.error {
+            color: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .api-key-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .api-key-input {
+                min-width: auto;
+            }
+            
+            .local-config {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Torna alla Home</a>
+        
+        <div class="header">
+            <div class="logo">SlideGuru</div>
+            <div class="subtitle">Configurazione Modelli LLM</div>
+        </div>
+
+        <div class="current-config">
+            <h3>Impostazioni Attuali</h3>
+            <div class="config-item">
+                <span class="config-label">Modello Corrente:</span>
+                <span class="config-value" id="current-model">{{ current_model }}</span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">Backend Locale:</span>
+                <span class="config-value" id="current-backend">{{ local_backend }}</span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">Endpoint Locale:</span>
+                <span class="config-value" id="current-endpoint">{{ local_endpoint }}</span>
+            </div>
+        </div>
+
+        <!-- OpenAI Section -->
+        <div class="provider-section">
+            <div class="provider-header">
+                <div class="provider-icon">🤖</div>
+                <div class="provider-info">
+                    <h3>OpenAI</h3>
+                    <p>Modelli GPT per compiti generali e creativi</p>
+                </div>
+            </div>
+            <div class="api-key-section">
+                <h4>Chiave API OpenAI</h4>
+                <div class="api-key-form">
+                    <input type="password" id="openai-key" class="api-key-input" placeholder="Inserisci la tua chiave API OpenAI">
+                    <button class="btn btn-primary" onclick="setApiKey('openai')">Salva</button>
+                    <button class="btn btn-secondary" onclick="testConnection('openai')">Test</button>
+                    {% if missing_keys.openai %}
+                    <a href="https://platform.openai.com/api-keys" target="_blank" class="external-link">Ottieni una chiave</a>
+                    {% endif %}
+                </div>
+                <div id="openai-test-result" class="test-result" style="display: none;"></div>
+            </div>
+            {% if not missing_keys.openai %}
+            <div class="model-selection">
+                <label for="openai-model-select">Modello OpenAI:</label>
+                <select id="openai-model-select" class="model-select"></select>
+                <button class="btn btn-primary" onclick="saveSelectedModel('openai')">Seleziona</button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Anthropic Section -->
+        <div class="provider-section">
+            <div class="provider-header">
+                <div class="provider-icon">🧠</div>
+                <div class="provider-info">
+                    <h3>Anthropic</h3>
+                    <p>Modelli Claude per analisi e ragionamento</p>
+                </div>
+            </div>
+            <div class="api-key-section">
+                <h4>Chiave API Anthropic</h4>
+                <div class="api-key-form">
+                    <input type="password" id="anthropic-key" class="api-key-input" placeholder="Inserisci la tua chiave API Anthropic">
+                    <button class="btn btn-primary" onclick="setApiKey('anthropic')">Salva</button>
+                    <button class="btn btn-secondary" onclick="testConnection('anthropic')">Test</button>
+                    {% if missing_keys.anthropic %}
+                    <a href="https://console.anthropic.com/settings/keys" target="_blank" class="external-link">Ottieni una chiave</a>
+                    {% endif %}
+                </div>
+                <div id="anthropic-test-result" class="test-result" style="display: none;"></div>
+            </div>
+            {% if not missing_keys.anthropic %}
+            <div class="model-selection">
+                <label for="anthropic-model-select">Modello Anthropic:</label>
+                <select id="anthropic-model-select" class="model-select"></select>
+                <button class="btn btn-primary" onclick="saveSelectedModel('anthropic')">Seleziona</button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Google Section -->
+        <div class="provider-section">
+            <div class="provider-header">
+                <div class="provider-icon">🔍</div>
+                <div class="provider-info">
+                    <h3>Google</h3>
+                    <p>Modelli Gemini per elaborazione multimodale</p>
+                </div>
+            </div>
+            <div class="api-key-section">
+                <h4>Chiave API Google</h4>
+                <div class="api-key-form">
+                    <input type="password" id="google-key" class="api-key-input" placeholder="Inserisci la tua chiave API Google">
+                    <button class="btn btn-primary" onclick="setApiKey('google')">Salva</button>
+                    <button class="btn btn-secondary" onclick="testConnection('google')">Test</button>
+                    {% if missing_keys.google %}
+                    <a href="https://makersuite.google.com/app/apikey" target="_blank" class="external-link">Ottieni una chiave</a>
+                    {% endif %}
+                </div>
+                <div id="google-test-result" class="test-result" style="display: none;"></div>
+            </div>
+            {% if not missing_keys.google %}
+            <div class="model-selection">
+                <label for="google-model-select">Modello Google:</label>
+                <select id="google-model-select" class="model-select"></select>
+                <button class="btn btn-primary" onclick="saveSelectedModel('google')">Seleziona</button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Local Section -->
+        <div class="provider-section">
+            <div class="provider-header">
+                <div class="provider-icon">🏠</div>
+                <div class="provider-info">
+                    <h3>Modelli Locali</h3>
+                    <p>Ollama e LM Studio per privacy totale</p>
+                </div>
+            </div>
+            <div class="local-config">
+                <label for="local-backend-select">Backend:</label>
+                <select id="local-backend-select" class="model-select" style="width: 200px;">
+                    <option value="ollama" {% if local_backend == 'ollama' %}selected{% endif %}>Ollama</option>
+                    <option value="lmstudio" {% if local_backend == 'lmstudio' %}selected{% endif %}>LM Studio</option>
+                </select>
+                <label for="local-endpoint-input">Endpoint:</label>
+                <input type="text" id="local-endpoint-input" class="param-input" style="width: 300px;" value="{{ local_endpoint }}" placeholder="http://localhost:11434">
+                <button class="btn btn-primary" onclick="saveLocalConfig()">Salva</button>
+            </div>
+            <div class="model-selection">
+                <label for="local-model-select">Modello Locale:</label>
+                <select id="local-model-select" class="model-select"></select>
+                <button class="btn btn-primary" onclick="saveSelectedModel('local')">Seleziona</button>
+                <button class="btn btn-secondary" onclick="refreshLocalModels()">Aggiorna Lista</button>
+            </div>
+        </div>
+
+        <!-- System Prompt Section -->
+        <div class="system-prompt-section">
+            <h3>Prompt di Sistema</h3>
+            <p style="color: #666; margin-bottom: 15px;">Personalizza il comportamento di SlideGuru modificando il prompt di sistema:</p>
+            <textarea id="system-prompt" class="param-input" placeholder="Inserisci il prompt di sistema..."></textarea>
+            <button class="btn btn-primary" onclick="saveSystemPrompt()">Salva Prompt</button>
+            <span id="system-prompt-status" class="save-status"></span>
+        </div>
     </div>
-  </div>
-  <div class="api-key-section">
-    <h4>Chiave API OpenAI</h4>
-    <div class="api-key-form">
-      <input type="password" id="openai-key" class="api-key-input" placeholder="Inserisci la tua chiave API OpenAI">
-      <button class="btn btn-primary" onclick="setApiKey('openai')">Salva</button>
-      <button class="btn btn-secondary" onclick="testConnection('openai')">Test</button>
-      {% if missing_keys.openai %}
-      <a href="https://platform.openai.com/api-keys" target="_blank" style="margin-left:10px;color:#667eea;">Ottieni una chiave</a>
-      {% endif %}
-    </div>
-    <div id="openai-test-result" class="test-result" style="display: none;"></div>
-  </div>
-  {% if not missing_keys.openai %}
-  <div style="margin:20px 0;">
-    <label for="openai-model-select"><b>Modello OpenAI:</b></label>
-    <select id="openai-model-select" class="param-input" style="width:300px;"></select>
-    <button class="btn btn-primary" onclick="saveSelectedModel('openai')">Seleziona</button>
-  </div>
-  {% endif %}
-</div>
-<!-- ... ripeti per Anthropic, Google, Locale ... -->
-<!-- Prompt di sistema -->
-<div class="provider-section">
-  <h3>Prompt di sistema</h3>
-  <div class="api-key-section">
-    <textarea id="system-prompt" class="param-input" style="width:100%;min-height:120px;"></textarea>
-    <button class="btn btn-primary" onclick="saveSystemPrompt()">Salva Prompt</button>
-    <span id="system-prompt-status" style="margin-left:10px;"></span>
-  </div>
-</div>
-<script>
-function populateModelSelect(provider) {
-  fetch('/api/list_models', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ provider: provider })
-  })
-  .then(response => response.json())
-  .then(data => {
-    const select = document.getElementById(provider + '-model-select');
-    if (!select) return;
-    select.innerHTML = '';
-    if (data.status === 'success' && data.models.length > 0) {
-      data.models.forEach(model => {
-        const option = document.createElement('option');
-        option.value = model;
-        option.textContent = model;
-        select.appendChild(option);
-      });
-    } else {
-      const option = document.createElement('option');
-      option.value = '';
-      option.textContent = 'Nessun modello disponibile';
-      select.appendChild(option);
-    }
-  });
-}
-function saveSelectedModel(provider) {
-  const select = document.getElementById(provider + '-model-select');
-  const modelId = select.value;
-  if (!modelId) return alert('Seleziona un modello valido');
-  fetch('/api/set_model', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model_id: modelId })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === 'success') {
-      alert('Modello impostato con successo!');
-      loadConfig();
-    } else {
-      alert('Errore: ' + data.message);
-    }
-  });
-}
-function loadSystemPrompt() {
-  fetch('/api/get_system_prompt')
-    .then(r => r.json())
-    .then(data => {
-      if(data.status === 'success') {
-        document.getElementById('system-prompt').value = data.prompt;
-      }
-    });
-}
-function saveSystemPrompt() {
-  const prompt = document.getElementById('system-prompt').value.trim();
-  fetch('/api/set_system_prompt', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt })
-  })
-  .then(r => r.json())
-  .then(data => {
-    const status = document.getElementById('system-prompt-status');
-    if(data.status === 'success') {
-      status.textContent = 'Prompt salvato!';
-      status.style.color = 'green';
-    } else {
-      status.textContent = 'Errore: ' + data.message;
-      status.style.color = 'red';
-    }
-    setTimeout(() => status.textContent = '', 2000);
-  });
-}
-// Popola i menu modelli al caricamento
-['openai','anthropic','google','local'].forEach(populateModelSelect);
-// Carica il prompt al caricamento pagina
-loadSystemPrompt();
-// Aggiorna endpoint locale al cambio backend
-const backendSelect = document.getElementById('local-backend-select');
-if(backendSelect) {
-  backendSelect.addEventListener('change', function() {
-    fetch('/api/default_endpoint', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ backend: this.value })
-    })
-    .then(r => r.json())
-    .then(data => {
-      if(data.status === 'success') {
-        document.getElementById('local-endpoint-input').value = data.endpoint;
-      }
-    });
-  });
-}
-</script> 
+
+    <script>
+        // Carica la configurazione al caricamento della pagina
+        window.addEventListener('load', function() {
+            loadConfig();
+            loadSystemPrompt();
+            populateModelSelects();
+        });
+
+        function loadConfig() {
+            fetch('/api/get_config')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('current-model').textContent = data.current_model;
+                    document.getElementById('current-backend').textContent = data.local_backend;
+                    document.getElementById('current-endpoint').textContent = data.local_endpoint;
+                });
+        }
+
+        function setApiKey(provider) {
+            const keyInput = document.getElementById(provider + '-key');
+            const apiKey = keyInput.value.trim();
+            
+            if (!apiKey) {
+                alert('Inserisci una chiave API valida');
+                return;
+            }
+
+            fetch('/api/set_api_key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ provider: provider, api_key: apiKey })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Chiave API salvata con successo!');
+                    keyInput.value = '';
+                    location.reload(); // Ricarica la pagina per aggiornare la UI
+                } else {
+                    alert('Errore: ' + data.message);
+                }
+            });
+        }
+
+        function testConnection(provider) {
+            const resultDiv = document.getElementById(provider + '-test-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Test in corso...';
+            resultDiv.className = 'test-result';
+
+            fetch('/api/test_connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ provider: provider })
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDiv.textContent = data.message;
+                resultDiv.className = 'test-result ' + (data.status === 'success' ? 'success' : 'error');
+            });
+        }
+
+        function populateModelSelects() {
+            ['openai', 'anthropic', 'google', 'local'].forEach(provider => {
+                populateModelSelect(provider);
+            });
+        }
+
+        function populateModelSelect(provider) {
+            const select = document.getElementById(provider + '-model-select');
+            if (!select) return;
+
+            // Per i provider cloud, usa i modelli predefiniti
+            const predefinedModels = {
+                'openai': ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
+                'anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307'],
+                'google': ['gemini-1.5-pro', 'gemini-1.5-flash'],
+                'local': [] // I modelli locali verranno popolati dinamicamente
+            };
+
+            if (provider === 'local') {
+                // Per i modelli locali, interroga l'API
+                fetch('/api/list_models', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider: provider })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    select.innerHTML = '';
+                    if (data.status === 'success' && data.models.length > 0) {
+                        data.models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model;
+                            option.textContent = model;
+                            select.appendChild(option);
+                        });
+                    } else {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'Nessun modello locale disponibile';
+                        select.appendChild(option);
+                    }
+                });
+            } else {
+                // Per i provider cloud, usa i modelli predefiniti
+                const models = predefinedModels[provider] || [];
+                select.innerHTML = '';
+                
+                if (models.length > 0) {
+                    models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model;
+                        option.textContent = model;
+                        select.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Nessun modello disponibile';
+                    select.appendChild(option);
+                }
+            }
+        }
+
+        function saveSelectedModel(provider) {
+            const select = document.getElementById(provider + '-model-select');
+            const modelName = select.value;
+            
+            if (!modelName) {
+                alert('Seleziona un modello valido');
+                return;
+            }
+
+            // Mappa il nome del modello all'ID del modello in config.py
+            const modelMapping = {
+                'gpt-4o': 'gpt-4o',
+                'gpt-4o-mini': 'gpt-4o-mini', 
+                'gpt-3.5-turbo': 'gpt-3.5-turbo',
+                'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet',
+                'claude-3-haiku-20240307': 'claude-3-haiku',
+                'gemini-1.5-pro': 'gemini-1.5-pro',
+                'gemini-1.5-flash': 'gemini-1.5-flash',
+                'llama3.1:8b': 'llama3.1-8b',
+                'llama3.1:70b': 'llama3.1-70b',
+                'mistral:7b': 'mistral-7b',
+                'codellama:7b': 'codellama-7b'
+            };
+
+            const modelId = modelMapping[modelName] || modelName;
+
+            fetch('/api/set_model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model_id: modelId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Modello impostato con successo!');
+                    loadConfig();
+                } else {
+                    alert('Errore: ' + data.message);
+                }
+            });
+        }
+
+        function saveLocalConfig() {
+            const backend = document.getElementById('local-backend-select').value;
+            const endpoint = document.getElementById('local-endpoint-input').value;
+
+            fetch('/api/set_local_backend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ backend: backend, endpoint: endpoint })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Configurazione locale salvata!');
+                    loadConfig();
+                    populateModelSelect('local');
+                } else {
+                    alert('Errore: ' + data.message);
+                }
+            });
+        }
+
+        function refreshLocalModels() {
+            populateModelSelect('local');
+        }
+
+        function loadSystemPrompt() {
+            fetch('/api/get_system_prompt')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('system-prompt').value = data.prompt;
+                    }
+                });
+        }
+
+        function saveSystemPrompt() {
+            const prompt = document.getElementById('system-prompt').value.trim();
+            const status = document.getElementById('system-prompt-status');
+
+            if (!prompt) {
+                status.textContent = 'Inserisci un prompt valido';
+                status.className = 'save-status error';
+                return;
+            }
+
+            fetch('/api/set_system_prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: prompt })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    status.textContent = 'Prompt salvato!';
+                    status.className = 'save-status success';
+                } else {
+                    status.textContent = 'Errore: ' + data.message;
+                    status.className = 'save-status error';
+                }
+                setTimeout(() => {
+                    status.textContent = '';
+                    status.className = 'save-status';
+                }, 3000);
+            });
+        }
+
+        // Aggiorna endpoint locale quando cambia il backend
+        document.getElementById('local-backend-select').addEventListener('change', function() {
+            fetch('/api/default_endpoint', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ backend: this.value })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('local-endpoint-input').value = data.endpoint;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

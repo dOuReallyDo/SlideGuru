@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 import os
 import json
+import shutil
+from datetime import datetime
 from flask import Flask, render_template, request, send_file, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 import docx
@@ -19,6 +21,7 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'a-super-secret-key-for-flash-messages'
 app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['ARCHIVE_FOLDER'] = 'archive'
 app.config['ALLOWED_EXTENSIONS'] = {'txt', 'pdf', 'docx'}
 app.config['TEMPLATE_PATH'] = os.path.join('static', 'template.pptx')
 
@@ -72,12 +75,40 @@ def create_presentation(slides_content):
 
 def generate_slide_content(prompt_text):
     try:
-        prompt = f"Genera una breve struttura di slide PowerPoint per: {prompt_text}. Rispondi in JSON con lista di dict contenenti 'title' e 'content'."
+        prompt = f"Analizza il seguente contenuto e genera una struttura di slide PowerPoint professionale:\n\n{prompt_text}\n\nRispondi SOLO con un JSON valido contenente una lista di oggetti con 'title' e 'content' per ogni slide."
         response = llm_service.generate_content(prompt)
+        
+        # Prova a pulire e parsificare il JSON
         try:
-            slides_content = json.loads(response)
+            # Rimuove eventuali backticks e testo extra
+            json_start = response.find('[')
+            json_end = response.rfind(']') + 1
+            if json_start != -1 and json_end > json_start:
+                json_str = response[json_start:json_end]
+                slides_content = json.loads(json_str)
+            else:
+                # Se non trova JSON, prova a parsificare direttamente
+                slides_content = json.loads(response)
         except json.JSONDecodeError:
-            slides_content = [{"title": "Errore parsing JSON", "content": response}]
+            # Se il parsing fallisce, crea slide con contenuto grezzo
+            slides_content = [
+                {"title": "Contenuto Generato", "content": response},
+                {"title": "Nota", "content": "Il modello non ha restituito un JSON valido. Contenuto mostrato in forma grezza."}
+            ]
+        
+        # Verifica che sia una lista di dizionari
+        if not isinstance(slides_content, list):
+            slides_content = [{"title": "Contenuto", "content": str(slides_content)}]
+        
+        # Verifica che ogni elemento abbia title e content
+        for slide in slides_content:
+            if not isinstance(slide, dict):
+                slide = {"title": "Slide", "content": str(slide)}
+            if 'title' not in slide:
+                slide['title'] = "Slide"
+            if 'content' not in slide:
+                slide['content'] = ""
+        
         return slides_content
     except Exception as e:
         return [{"title": "Errore generazione", "content": f"Errore: {str(e)}"}]
@@ -111,7 +142,9 @@ def index():
 
 @app.route("/config")
 def config_page():
-    current_model = llm_config.get_current_model()
+    current_model_config = llm_config.get_current_model()
+    current_model_name = current_model_config.name if current_model_config else "Nessuno"
+    
     # Modelli cloud disponibili solo se c'è la key
     available_cloud = llm_service.available_cloud_models()
     # Modelli locali effettivamente disponibili
@@ -123,7 +156,8 @@ def config_page():
         'google': not bool(llm_config.get_api_key(LLMProvider.GOOGLE)),
     }
     return render_template('config.html',
-        current_model=current_model,
+        current_model=current_model_name,
+        current_model_id=llm_config.current_model,
         available_cloud=available_cloud,
         available_local=available_local,
         missing_keys=missing_keys,
@@ -268,6 +302,19 @@ def api_default_endpoint():
     last = getattr(llm_config, f'last_endpoint_{backend}', None)
     endpoint = last or defaults.get(backend, '')
     return jsonify({'status': 'success', 'endpoint': endpoint})
+
+@app.route("/api/get_system_prompt", methods=['GET'])
+def get_system_prompt():
+    return jsonify({"status": "success", "prompt": llm_config.system_prompt})
+
+@app.route("/api/set_system_prompt", methods=['POST'])
+def set_system_prompt():
+    data = request.get_json()
+    prompt = data.get('prompt', '').strip()
+    if not prompt:
+        return jsonify({"status": "error", "message": "Prompt non valido"})
+    llm_config.set_system_prompt(prompt)
+    return jsonify({"status": "success", "message": "Prompt aggiornato"})
 
 # --- START SERVER ---
 if __name__ == "__main__":

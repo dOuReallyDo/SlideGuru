@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="it">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SlideGuru - Generatore di Presentazioni PowerPoint</title>
@@ -199,7 +199,7 @@
             border: 2px solid #667eea;
         }
     </style>
-</head>
+  </head>
 <body>
     <div class="container">
         <div class="logo">SlideGuru</div>
@@ -209,7 +209,7 @@
             <a href="/config" style="color: #667eea; text-decoration: none; font-size: 0.9rem;">
                 ⚙️ Configurazione LLM
             </a>
-        </div>
+</div>
 
         {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -217,7 +217,7 @@
                     {% for message in messages %}
                         <div class="flash-message flash-error">{{ message }}</div>
                     {% endfor %}
-                </div>
+</div>
             {% endif %}
         {% endwith %}
 
@@ -227,12 +227,12 @@
                 <div class="upload-text">Clicca o trascina qui il tuo file</div>
                 <div class="upload-hint">Supporta PDF, DOCX e TXT</div>
                 <input type="file" name="file" id="file-input" accept=".pdf,.docx,.txt" multiple>
-            </div>
+</div>
 
             <div class="file-info" id="file-info">
                 <div class="file-name" id="file-name"></div>
                 <div class="file-size" id="file-size"></div>
-            </div>
+</div>
 
             <button type="submit" class="submit-btn" id="submit-btn">
                 Genera Presentazione PowerPoint
@@ -242,7 +242,7 @@
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <div>Generazione della presentazione in corso...</div>
-        </div>
+</div>
 
         <div class="supported-formats">
             <h3>Formati Supportati</h3>
@@ -250,8 +250,8 @@
                 <div class="format-item">PDF</div>
                 <div class="format-item">DOCX</div>
                 <div class="format-item">TXT</div>
-            </div>
-        </div>
+</div>
+      </div>
     </div>
 
     <script>
@@ -321,5 +321,5 @@
             loading.style.display = 'block';
         });
     </script>
-</body>
+  </body>
 </html>

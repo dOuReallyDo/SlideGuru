@@ -39,15 +39,19 @@ class LLMService:
         if not model_config:
             raise ValueError(f"Modello {model_id} non trovato")
         
+        # Prepara il prompt finale con il system prompt
+        system_prompt = llm_config.get_system_prompt()
+        full_prompt = f"{system_prompt}\n\n{prompt}"
+        
         try:
             if model_config.provider == LLMProvider.OPENAI:
-                return self._generate_openai(prompt, model_config)
+                return self._generate_openai(full_prompt, model_config)
             elif model_config.provider == LLMProvider.ANTHROPIC:
-                return self._generate_anthropic(prompt, model_config)
+                return self._generate_anthropic(full_prompt, model_config)
             elif model_config.provider == LLMProvider.GOOGLE:
-                return self._generate_google(prompt, model_config)
+                return self._generate_google(full_prompt, model_config)
             elif model_config.provider == LLMProvider.LOCAL:
-                return self._generate_local(prompt, model_config)
+                return self._generate_local(full_prompt, model_config)
             else:
                 raise ValueError(f"Provider {model_config.provider} non supportato")
         except Exception as e:
@@ -60,7 +64,7 @@ class LLMService:
         
         try:
             response = self.openai_client.chat.completions.create(
-                model=model_config.name.lower().replace(" ", "-"),
+                model=model_config.name,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=model_config.max_tokens,
                 temperature=model_config.temperature
@@ -76,7 +80,7 @@ class LLMService:
         
         try:
             response = self.anthropic_client.messages.create(
-                model=model_config.name.lower().replace(" ", "-"),
+                model=model_config.name,
                 max_tokens=model_config.max_tokens,
                 temperature=model_config.temperature,
                 messages=[{"role": "user", "content": prompt}]
@@ -88,7 +92,7 @@ class LLMService:
     def _generate_google(self, prompt: str, model_config) -> str:
         """Genera contenuto usando Google Gemini"""
         try:
-            model = genai.GenerativeModel(model_config.name.lower().replace(" ", "-"))
+            model = genai.GenerativeModel(model_config.name)
             response = model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
@@ -101,29 +105,52 @@ class LLMService:
             raise Exception(f"Errore Google: {str(e)}")
     
     def _generate_local(self, prompt: str, model_config) -> str:
-        """Genera contenuto usando modelli locali (Ollama)"""
+        """Genera contenuto usando modelli locali (Ollama/LM Studio)"""
         try:
-            # Usa il nome del modello per Ollama
-            model_name = model_config.name.lower().replace(" ", "").replace(".", "")
+            # Usa l'endpoint configurato invece di base_url
+            endpoint = llm_config.local_endpoint
+            backend = llm_config.local_backend
             
-            response = requests.post(
-                f"{model_config.base_url}/api/generate",
-                json={
-                    "model": model_name,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": model_config.temperature,
-                        "num_predict": model_config.max_tokens
-                    }
-                },
-                timeout=120
-            )
+            if backend == "ollama":
+                response = requests.post(
+                    f"{endpoint}/api/generate",
+                    json={
+                        "model": model_config.name,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": model_config.temperature,
+                            "num_predict": model_config.max_tokens
+                        }
+                    },
+                    timeout=120
+                )
+                
+                if response.status_code == 200:
+                    return response.json()["response"]
+                else:
+                    raise Exception(f"Errore API Ollama: {response.status_code}")
             
-            if response.status_code == 200:
-                return response.json()["response"]
+            elif backend == "lmstudio":
+                response = requests.post(
+                    f"{endpoint}/v1/chat/completions",
+                    json={
+                        "model": model_config.name,
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": model_config.max_tokens,
+                        "temperature": model_config.temperature
+                    },
+                    timeout=120
+                )
+                
+                if response.status_code == 200:
+                    return response.json()["choices"][0]["message"]["content"]
+                else:
+                    raise Exception(f"Errore API LM Studio: {response.status_code}")
+            
             else:
-                raise Exception(f"Errore API locale: {response.status_code}")
+                raise Exception(f"Backend locale non supportato: {backend}")
+                
         except Exception as e:
             raise Exception(f"Errore modello locale: {str(e)}")
     
@@ -150,15 +177,27 @@ class LLMService:
                     return {"status": "error", "message": "Errore nella connessione a Google"}
             
             elif provider == LLMProvider.LOCAL:
+                endpoint = llm_config.local_endpoint
+                backend = llm_config.local_backend
                 try:
-                    response = requests.get("http://localhost:11434/api/tags", timeout=5)
-                    if response.status_code == 200:
-                        models = response.json().get("models", [])
-                        return {"status": "success", "message": f"Connesso a Ollama. Modelli disponibili: {len(models)}"}
+                    if backend == "ollama":
+                        response = requests.get(f"{endpoint}/api/tags", timeout=5)
+                        if response.status_code == 200:
+                            models = response.json().get("models", [])
+                            return {"status": "success", "message": f"Connesso a Ollama. Modelli disponibili: {len(models)}"}
+                        else:
+                            return {"status": "error", "message": "Ollama non raggiungibile"}
+                    elif backend == "lmstudio":
+                        response = requests.get(f"{endpoint}/v1/internal/model/all", timeout=5)
+                        if response.status_code == 200:
+                            models = response.json().get("data", [])
+                            return {"status": "success", "message": f"Connesso a LM Studio. Modelli disponibili: {len(models)}"}
+                        else:
+                            return {"status": "error", "message": "LM Studio non raggiungibile"}
                     else:
-                        return {"status": "error", "message": "Ollama non raggiungibile"}
-                except:
-                    return {"status": "error", "message": "Ollama non in esecuzione"}
+                        return {"status": "error", "message": f"Backend locale non supportato: {backend}"}
+                except Exception as e:
+                    return {"status": "error", "message": f"Errore connessione locale: {str(e)}"}
             
             else:
                 return {"status": "error", "message": "Provider non supportato"}
@@ -177,15 +216,27 @@ class LLMService:
                 return {"status": "success", "models": models}
             
             elif provider == LLMProvider.LOCAL:
+                endpoint = llm_config.local_endpoint
+                backend = llm_config.local_backend
                 try:
-                    response = requests.get("http://localhost:11434/api/tags", timeout=5)
-                    if response.status_code == 200:
-                        models = [model["name"] for model in response.json().get("models", [])]
-                        return {"status": "success", "models": models}
+                    if backend == "ollama":
+                        response = requests.get(f"{endpoint}/api/tags", timeout=5)
+                        if response.status_code == 200:
+                            models = [model["name"] for model in response.json().get("models", [])]
+                            return {"status": "success", "models": models}
+                        else:
+                            return {"status": "error", "message": "Ollama non raggiungibile"}
+                    elif backend == "lmstudio":
+                        response = requests.get(f"{endpoint}/v1/internal/model/all", timeout=5)
+                        if response.status_code == 200:
+                            models = [model["modelId"] for model in response.json().get("data", [])]
+                            return {"status": "success", "models": models}
+                        else:
+                            return {"status": "error", "message": "LM Studio non raggiungibile"}
                     else:
-                        return {"status": "error", "message": "Ollama non raggiungibile"}
-                except:
-                    return {"status": "error", "message": "Ollama non in esecuzione"}
+                        return {"status": "error", "message": f"Backend locale non supportato: {backend}"}
+                except Exception as e:
+                    return {"status": "error", "message": f"Errore nel recupero dei modelli: {str(e)}"}
             
             else:
                 return {"status": "error", "message": "Provider non supportato per il listing dei modelli"}
@@ -213,18 +264,18 @@ class LLMService:
                 if response.status_code == 200:
                     local_names = [m["name"] for m in response.json().get("models", [])]
                     for model_id, model in llm_config.models.items():
-                        if model.provider == LLMProvider.LOCAL and model.name.lower().replace(" ", "").replace(".", "") in local_names:
+                        if model.provider == LLMProvider.LOCAL and model.name in local_names:
                             available[model_id] = model
             elif backend == "lmstudio":
                 response = requests.get(f"{endpoint}/v1/internal/model/all", timeout=5)
                 if response.status_code == 200:
                     local_names = [m["modelId"] for m in response.json().get("data", [])]
                     for model_id, model in llm_config.models.items():
-                        if model.provider == LLMProvider.LOCAL and model.name.lower().replace(" ", "").replace(".", "") in local_names:
+                        if model.provider == LLMProvider.LOCAL and model.name in local_names:
                             available[model_id] = model
         except Exception:
             pass
         return available
 
 # Istanza globale del servizio LLM
-llm_service = LLMService() 
+llm_service = LLMService()
