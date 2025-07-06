@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SlideGuru MVP</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #f4f7f6; }
+        .container { background-color: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); text-align: center; }
+        h1 { color: #2c3e50; font-weight: 700; }
+        p { color: #555; }
+        .upload-btn-wrapper { position: relative; overflow: hidden; display: inline-block; cursor: pointer; }
+        .btn { border: 2px solid #3498db; color: #3498db; background-color: white; padding: 10px 25px; border-radius: 8px; font-size: 16px; font-weight: bold; transition: all 0.3s ease; }
+        .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        .upload-btn-wrapper:hover .btn { background-color: #3498db; color: white; }
+        #fileName { margin-top: 15px; font-style: italic; color: #777; }
+        #submitBtn { background-color: #2ecc71; color: white; border: none; padding: 12px 30px; margin-top: 20px; font-size: 18px; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; display: none; }
+        #submitBtn:hover { background-color: #27ae60; }
+        #submitBtn:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        #loading { display: none; margin-top: 20px; }
+        .flashes { list-style: none; padding: 0; margin-bottom: 20px; }
+        .flashes li { padding: 15px; margin-bottom: 10px; border-radius: 5px; color: #fff; text-align: left; }
+        .flashes .danger { background-color: #e74c3c; }
+        .flashes .warning { background-color: #f39c12; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ SlideGuru MVP</h1>
+        <p>Upload a document (DOCX, PDF, TXT) and I'll transform it into a stunning presentation based on your template.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class=flashes>
+            {% for category, message in messages %}
+              <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        
+        <form id="uploadForm" action="/" method="post" enctype="multipart/form-data">
+            <div class="upload-btn-wrapper">
+                <button type="button" class="btn">Choose a file</button>
+                <input type="file" name="file" id="fileInput" accept=".docx,.pdf,.txt" required>
+            </div>
+            <div id="fileName">No file selected</div>
+            <button type="submit" id="submitBtn" disabled>Generate Slides</button>
+        </form>
+
+        <div id="loading">
+            <p><strong>Processing...</strong> The AI is analyzing your document and building the slides. This may take a minute.</p>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const loadingDiv = document.getElementById('loading');
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = fileInput.files[0].name;
+                submitBtn.disabled = false;
+                submitBtn.style.display = 'inline-block';
+            } else {
+                fileNameDisplay.textContent = 'No file selected';
+                submitBtn.disabled = true;
+                submitBtn.style.display = 'none';
+            }
+        });
+
+        uploadForm.addEventListener('submit', () => {
+            submitBtn.style.display = 'none';
+            loadingDiv.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
