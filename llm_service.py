@@ -4,7 +4,7 @@ from typing import Dict, Any, Optional
 from openai import OpenAI
 from anthropic import Anthropic
 import google.generativeai as genai
-from config import LLMProvider, llm_config
+from config import LLMProvider, llm_config, ModelConfig
 
 class LLMService:
     def __init__(self):
@@ -35,7 +35,14 @@ class LLMService:
         if model_id is None:
             model_id = llm_config.current_model
         
+        # Prova prima nei modelli statici
         model_config = llm_config.models.get(model_id)
+        
+        # Se non trovato nei modelli statici, controlla i modelli locali dinamici
+        if not model_config and (model_id.startswith('local_') or model_id.startswith('ollama_') or model_id.startswith('lmstudio_')):
+            local_models = self.available_local_models()
+            model_config = local_models.get(model_id)
+        
         if not model_config:
             raise ValueError(f"Modello {model_id} non trovato")
         
@@ -107,9 +114,16 @@ class LLMService:
     def _generate_local(self, prompt: str, model_config) -> str:
         """Genera contenuto usando modelli locali (Ollama/LM Studio)"""
         try:
-            # Usa l'endpoint configurato invece di base_url
-            endpoint = llm_config.local_endpoint
-            backend = llm_config.local_backend
+            # Usa l'endpoint specifico del modello se disponibile, altrimenti quello configurato
+            endpoint = model_config.base_url if model_config.base_url else llm_config.local_endpoint
+            
+            # Determina il backend dal tipo di modello o dalla configurazione
+            if "ollama" in model_config.description.lower():
+                backend = "ollama"
+            elif "lm studio" in model_config.description.lower():
+                backend = "lmstudio"
+            else:
+                backend = llm_config.local_backend
             
             if backend == "ollama":
                 response = requests.post(
@@ -129,7 +143,7 @@ class LLMService:
                 if response.status_code == 200:
                     return response.json()["response"]
                 else:
-                    raise Exception(f"Errore API Ollama: {response.status_code}")
+                    raise Exception(f"Errore API Ollama su {endpoint}: {response.status_code}")
             
             elif backend == "lmstudio":
                 response = requests.post(
@@ -146,7 +160,7 @@ class LLMService:
                 if response.status_code == 200:
                     return response.json()["choices"][0]["message"]["content"]
                 else:
-                    raise Exception(f"Errore API LM Studio: {response.status_code}")
+                    raise Exception(f"Errore API LM Studio su {endpoint}: {response.status_code}")
             
             else:
                 raise Exception(f"Backend locale non supportato: {backend}")
@@ -254,27 +268,72 @@ class LLMService:
         return available
 
     def available_local_models(self):
-        """Restituisce solo i modelli locali effettivamente disponibili interrogando Ollama o LM Studio."""
+        """Restituisce tutti i modelli locali disponibili su tutti gli endpoint configurati."""
         available = {}
-        endpoint = llm_config.local_endpoint
-        backend = llm_config.local_backend
-        try:
-            if backend == "ollama":
+        
+        # Controlla TUTTI gli endpoint per entrambi i backend
+        all_endpoints = {
+            "ollama": llm_config.local_endpoints.get("ollama", ["http://localhost:11434"]),
+            "lmstudio": llm_config.local_endpoints.get("lmstudio", ["http://localhost:1234"])
+        }
+        
+        # Aggiungi sempre l'endpoint corrente se non è già nella lista
+        current_backend = llm_config.local_backend
+        if llm_config.local_endpoint not in all_endpoints[current_backend]:
+            all_endpoints[current_backend].append(llm_config.local_endpoint)
+        
+        # Controlla endpoints Ollama
+        for endpoint in all_endpoints["ollama"]:
+            try:
                 response = requests.get(f"{endpoint}/api/tags", timeout=5)
                 if response.status_code == 200:
-                    local_names = [m["name"] for m in response.json().get("models", [])]
-                    for model_id, model in llm_config.models.items():
-                        if model.provider == LLMProvider.LOCAL and model.name in local_names:
-                            available[model_id] = model
-            elif backend == "lmstudio":
+                    models = response.json().get("models", [])
+                    for model in models:
+                        model_name = model["name"]
+                        # Crea un ID unico per ogni combinazione modello+endpoint
+                        endpoint_id = endpoint.split('/')[-1].replace(':', '_')
+                        model_id = f"ollama_{model_name.replace(':', '_')}_{endpoint_id}"
+                        
+                        # Crea una configurazione dinamica per questo modello
+                        available[model_id] = ModelConfig(
+                            name=model_name,
+                            provider=LLMProvider.LOCAL,
+                            description=f"Ollama: {model_name} su {endpoint}",
+                            max_tokens=4096,
+                            temperature=0.7,
+                            context_window=8192,
+                            base_url=endpoint
+                        )
+            except Exception as e:
+                print(f"Errore interrogando endpoint Ollama {endpoint}: {e}")
+                continue
+        
+        # Controlla endpoints LM Studio
+        for endpoint in all_endpoints["lmstudio"]:
+            try:
                 response = requests.get(f"{endpoint}/v1/internal/model/all", timeout=5)
                 if response.status_code == 200:
-                    local_names = [m["modelId"] for m in response.json().get("data", [])]
-                    for model_id, model in llm_config.models.items():
-                        if model.provider == LLMProvider.LOCAL and model.name in local_names:
-                            available[model_id] = model
-        except Exception:
-            pass
+                    models = response.json().get("data", [])
+                    for model in models:
+                        model_name = model["modelId"]
+                        # Crea un ID unico per ogni combinazione modello+endpoint
+                        endpoint_id = endpoint.split('/')[-1].replace(':', '_')
+                        model_id = f"lmstudio_{model_name.replace('/', '_').replace(':', '_')}_{endpoint_id}"
+                        
+                        # Crea una configurazione dinamica per questo modello
+                        available[model_id] = ModelConfig(
+                            name=model_name,
+                            provider=LLMProvider.LOCAL,
+                            description=f"LM Studio: {model_name} su {endpoint}",
+                            max_tokens=4096,
+                            temperature=0.7,
+                            context_window=8192,
+                            base_url=endpoint
+                        )
+            except Exception as e:
+                print(f"Errore interrogando endpoint LM Studio {endpoint}: {e}")
+                continue
+        
         return available
 
 # Istanza globale del servizio LLM
